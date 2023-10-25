@@ -30,6 +30,12 @@ void DataBase::ConnectToDB()
     dataBase_->setPassword(data[pass]);
 
     status_ = dataBase_->open();
+
+    emit sig_SendStatusConnection(status_);
+
+    modelTable_->setTable("bookings.airports");
+    modelTable_->select();
+    emit sig_SendTableFromDB(modelTable_);
 }
 
 void DataBase::DisconnectFromDB(QString nameDb)
@@ -41,6 +47,7 @@ void DataBase::DisconnectFromDB(QString nameDb)
 void DataBase::AddDataBase(QString driver, QString nameDB)
 {
     *dataBase_ = QSqlDatabase::addDatabase(driver, nameDB);
+    modelTable_ = new QSqlTableModel(this, *dataBase_);
 }
 
 

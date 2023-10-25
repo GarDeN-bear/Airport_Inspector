@@ -23,22 +23,26 @@ public:
         pass = 3,
         port = 4
     };
-    bool status_; //!< Connection status to data base
 
     DataBase(QObject *parent = nullptr);
     ~DataBase();
     void ConnectToDB();
     void DisconnectFromDB(QString nameDb = "");
     void AddDataBase(QString driver, QString nameDB = "");
+    bool status_;
 
     /*!
      * @brief Метод возвращает последнюю ошибку БД
      */
     QSqlError GetLastError(void);
 
+signals:
+    void sig_SendTableFromDB(QSqlTableModel* model);
+    void sig_SendStatusConnection(bool);
 private:
     QSqlDatabase *dataBase_;
     QSqlTableModel* modelTable_;
+
 };
 
 #endif // DATABASE_H

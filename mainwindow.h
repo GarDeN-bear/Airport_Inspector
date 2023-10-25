@@ -3,7 +3,9 @@
 
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QtConcurrent>
 
+#include "stopwatch.h"
 #include "database.h"
 
 QT_BEGIN_NAMESPACE
@@ -19,14 +21,17 @@ public:
     ~MainWindow();
 
 
-private slots:
+public slots:
     void on_pb_connect_clicked();
+    void ScreenTableFromDB(QSqlTableModel *model);
+    void ReceiveStatusConnectionToDB(bool status);
+    void RunConnectionToDB();
 
 private:
     Ui::MainWindow *ui;
     DataBase* dataBase_;
     QMessageBox *msgBox_;
-
-    void changeConnectionStatus();
+    Stopwatch *sw_;
+    bool isFailConnection_;
 };
 #endif // MAINWINDOW_H
