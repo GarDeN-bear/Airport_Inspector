@@ -39,9 +39,12 @@ public:
 signals:
     void sig_SendTableFromDB(QSqlTableModel* model);
     void sig_SendStatusConnection(bool);
+    void sig_SendQueryFromDB(QSqlQueryModel* model);
+
 private:
     QSqlDatabase *dataBase_;
     QSqlTableModel* modelTable_;
+    QSqlQueryModel* modelQuery;
 
 };
 

@@ -22,8 +22,8 @@ public:
 
 
 public slots:
-    void on_pb_connect_clicked();
     void ScreenTableFromDB(QSqlTableModel *model);
+    void ScreenQueryFromDB(QSqlQueryModel *model);
     void ReceiveStatusConnectionToDB(bool status);
     void RunConnectionToDB();
 

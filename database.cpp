@@ -3,6 +3,7 @@
 DataBase::DataBase(QObject *parent) : QObject{parent}
 {
     dataBase_ = new QSqlDatabase();
+    modelQuery= new QSqlQueryModel(this);
     status_ = false;
 }
 
@@ -30,12 +31,14 @@ void DataBase::ConnectToDB()
     dataBase_->setPassword(data[pass]);
 
     status_ = dataBase_->open();
+//    modelQuery->setQuery("SELECT * FROM bookings.bookings", *dataBase_);
+    modelTable_->setTable("bookings.flights");
+    modelTable_->select();
+    emit sig_SendTableFromDB(modelTable_);
+//    emit sig_SendQueryFromDB(modelQuery);
 
     emit sig_SendStatusConnection(status_);
 
-    modelTable_->setTable("bookings.airports");
-    modelTable_->select();
-    emit sig_SendTableFromDB(modelTable_);
 }
 
 void DataBase::DisconnectFromDB(QString nameDb)

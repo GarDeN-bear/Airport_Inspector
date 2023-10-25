@@ -16,12 +16,12 @@ MainWindow::MainWindow(QWidget *parent)
     dataBase_->AddDataBase(POSTGRE_DRIVER, DB_NAME);
     connect(dataBase_, &DataBase::sig_SendTableFromDB, this, &MainWindow::ScreenTableFromDB);
     connect(dataBase_, &DataBase::sig_SendStatusConnection, this, &MainWindow::ReceiveStatusConnectionToDB);
+    connect(dataBase_, &DataBase::sig_SendQueryFromDB, this, &MainWindow::ScreenQueryFromDB);
     connect(sw_->getQTimer(), &QTimer::timeout, this, &MainWindow::RunConnectionToDB);
 
     ui->lb_status->setText("Отключено от БД");
     ui->lb_status->setStyleSheet("color:red");
     ui->statusbar->addWidget(ui->lb_status);
-    ui->pb_connect->setText("Подключиться к БД");
 
     sw_->Start();
 }
@@ -31,9 +31,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_pb_connect_clicked()
+void MainWindow::ScreenQueryFromDB(QSqlQueryModel *model)
 {
-
+    ui->tb_main->setModel(model);
 }
 
 
@@ -49,7 +49,6 @@ void MainWindow::ReceiveStatusConnectionToDB(bool status)
         ui->lb_status->setText("Подключено к БД");
         ui->lb_status->setStyleSheet("color:green");
         ui->statusbar->addWidget(ui->lb_status);
-        ui->pb_connect->setText("Отключиться от БД");
         sw_->Stop();
     }
     else
@@ -58,7 +57,6 @@ void MainWindow::ReceiveStatusConnectionToDB(bool status)
         ui->lb_status->setText("Отключено от БД");
         ui->lb_status->setStyleSheet("color:red");
         ui->statusbar->addWidget(ui->lb_status);
-        ui->pb_connect->setText("Подключиться к БД");
         dataBase_->DisconnectFromDB(DB_NAME);
         msgBox_->setIcon(QMessageBox::Critical);
         msgBox_->setText(dataBase_->GetLastError().text());
@@ -73,12 +71,10 @@ void MainWindow::RunConnectionToDB()
 {
     if (!dataBase_->status_ && !isFailConnection_)
     {
-        ui->lb_status->setText("Подключение");
-        ui->lb_status->setStyleSheet("color:grow");
-        ui->statusbar->addWidget(ui->lb_status);
-        dataBase_->ConnectToDB();
-    }
+        auto conn = [&]{dataBase_->ConnectToDB();};
+        QtConcurrent::run(conn);
 
+    }
     if (isFailConnection_)
     {
         sw_->setTime(sw_->getCurrentTime() + 1);
