@@ -8,6 +8,7 @@
 
 #include "stopwatch.h"
 #include "database.h"
+#include "statistics.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,6 +24,7 @@ public:
 
 private slots:
     void on_pb_getList_clicked();
+    void on_pb_showLoad_clicked();
 
     void ScreenTableFromDB(QSqlTableModel *model);
     void ScreenQueryFromDB(QSqlQueryModel *model);
@@ -30,11 +32,15 @@ private slots:
     void RunConnectionToDB();
     void FillDataInAirports(QSqlQueryModel *model);
 
+    void StatisticsIsClosed();
+    void GetStatisticsPerYear();
+
 private:
     Ui::MainWindow *ui;
     DataBase* dataBase_;
     QMessageBox *msgBox_;
     Stopwatch *sw_;
+    Statistics *statistics_;
     QMap<QString, QString> airports_;
 
     bool isFailConnection_;

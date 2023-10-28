@@ -51,6 +51,9 @@ private:
     QSqlDatabase *dataBase_;
     QSqlTableModel* modelTable_;
     QSqlQueryModel* modelQuery_;
+    QString ParseInputDate(const QString& date);
+
+
 
 };
 

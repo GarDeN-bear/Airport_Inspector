@@ -64,10 +64,11 @@ void DataBase::AddDataBase(QString driver, QString nameDB)
 
 void DataBase::GetDataArrivals(const QString& airportCode, const QString& date)
 {
-    QString request = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru' as Name "
-                      "FROM bookings.flights f ";
-    "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport"
-    "WHERE (f.arrival_airport  = '" + airportCode + "' AND f.shceduled_arrival::date = date('" + date + "'))";
+    QString parsedDate = ParseInputDate(date);
+    QString request = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru'"
+                      "FROM bookings.flights f "
+                      "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport "
+                      "WHERE (f.arrival_airport  = '" + airportCode + "' AND f.shceduled_arrival::date = date('" + parsedDate + "'))";
     QSqlQuery* query = new QSqlQuery(*dataBase_);
     QSqlError error;
     if(!query->exec(request)){
@@ -80,10 +81,11 @@ void DataBase::GetDataArrivals(const QString& airportCode, const QString& date)
 
 void DataBase::GetDataDepartures(const QString &airportCode, const QString& date)
 {
-    QString request = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' as Name "
-                      "FROM bookings.flights f ";
-    "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport"
-    "WHERE f.departure_airport  = '" + airportCode + "' AND f.scheduled_departure::date = date('" + date + "'))";
+    QString parsedDate = ParseInputDate(date);
+    QString request = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' "
+                      "FROM bookings.flights f "
+                      "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport "
+                      "WHERE f.departure_airport  = '" + airportCode + "' AND f.scheduled_departure::date = date('" + parsedDate + "'))";
     QSqlQuery* query = new QSqlQuery(*dataBase_);
     QSqlError error;
     if(!query->exec(request)){
@@ -98,4 +100,26 @@ void DataBase::GetDataDepartures(const QString &airportCode, const QString& date
 QSqlError DataBase::GetLastError()
 {
     return dataBase_->lastError();
+}
+
+QString DataBase::ParseInputDate(const QString &date)
+{
+    QString day, month, year;
+    for(int i = 0; i < date.size(); ++i)
+    {
+        if(i < 2)
+        {
+            day+=date[i];
+        }
+        if(i > 2 && i < 5)
+        {
+            month+=date[i];
+        }
+        if(i > 5)
+        {
+            year+=date[i];
+        }
+    }
+    QString resultStr = year + "-" + month + "-" + day;
+    return resultStr;
 }

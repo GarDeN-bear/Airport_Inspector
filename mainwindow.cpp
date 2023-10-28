@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     dataBase_ = new DataBase(this);
     msgBox_ = new QMessageBox(this);
     sw_ = new Stopwatch(this);
+    statistics_ = new Statistics();
     isFailConnection_ = false;
 
     dataBase_->AddDataBase(POSTGRE_DRIVER, DB_NAME);
@@ -31,11 +32,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(dataBase_, &DataBase::sig_SendDataToDepartures, this, &MainWindow::ScreenQueryFromDB);
     connect(sw_->getQTimer(), &QTimer::timeout, this, &MainWindow::RunConnectionToDB);
 
+    connect(statistics_, &Statistics::sig_CloseStatistics, this, &MainWindow::StatisticsIsClosed);
+
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete statistics_;
 }
 
 void MainWindow::ScreenQueryFromDB(QSqlQueryModel *model)
@@ -103,6 +107,18 @@ void MainWindow::FillDataInAirports(QSqlQueryModel *model)
 
 }
 
+void MainWindow::StatisticsIsClosed()
+{
+    ui->centralwidget->setEnabled(true);
+    statistics_->close();
+}
+
+void MainWindow::GetStatisticsPerYear()
+{
+//    dataBase_->
+//    statistics_->SetStatisticsPerYear();
+}
+
 void MainWindow::on_pb_getList_clicked()
 {
     QString airportCode = airports_[ui->cb_airports->currentText()];
@@ -115,5 +131,15 @@ void MainWindow::on_pb_getList_clicked()
     {
         dataBase_->GetDataDepartures(airportCode, date);
     }
+}
+
+
+void MainWindow::on_pb_showLoad_clicked()
+{
+    ui->centralwidget->setEnabled(false);
+    QString airportCode = ui->cb_airports->currentText() +
+            " (" + airports_[ui->cb_airports->currentText()] + ")";
+    statistics_->SetAirport(airportCode);
+    statistics_->show();
 }
 
