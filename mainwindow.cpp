@@ -10,20 +10,27 @@ MainWindow::MainWindow(QWidget *parent)
     msgBox_ = new QMessageBox(this);
     sw_ = new Stopwatch(this);
     isFailConnection_ = false;
-    /*
-     * Добавим БД используя стандартный драйвер PSQL и зададим имя.
-    */
-    dataBase_->AddDataBase(POSTGRE_DRIVER, DB_NAME);
-    connect(dataBase_, &DataBase::sig_SendTableFromDB, this, &MainWindow::ScreenTableFromDB);
-    connect(dataBase_, &DataBase::sig_SendStatusConnection, this, &MainWindow::ReceiveStatusConnectionToDB);
-    connect(dataBase_, &DataBase::sig_SendQueryFromDB, this, &MainWindow::ScreenQueryFromDB);
-    connect(sw_->getQTimer(), &QTimer::timeout, this, &MainWindow::RunConnectionToDB);
 
+    dataBase_->AddDataBase(POSTGRE_DRIVER, DB_NAME);
+
+    ui->tb_main->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tb_main->verticalHeader()->setVisible(false);
+    ui->groupBox->setEnabled(false);
     ui->lb_status->setText("Отключено от БД");
     ui->lb_status->setStyleSheet("color:red");
     ui->statusbar->addWidget(ui->lb_status);
+    ui->rb_arrival->setChecked(true);
 
     sw_->Start();
+
+    connect(dataBase_, &DataBase::sig_SendTableFromDB, this, &MainWindow::ScreenTableFromDB);
+    connect(dataBase_, &DataBase::sig_SendStatusConnection, this, &MainWindow::ReceiveStatusConnectionToDB);
+    connect(dataBase_, &DataBase::sig_SendQueryFromDB, this, &MainWindow::ScreenQueryFromDB);
+    connect(dataBase_, &DataBase::sig_SendDataToAirports, this, &MainWindow::FillDataInAirports);
+    connect(dataBase_, &DataBase::sig_SendDataToArrivals, this, &MainWindow::ScreenQueryFromDB);
+    connect(dataBase_, &DataBase::sig_SendDataToDepartures, this, &MainWindow::ScreenQueryFromDB);
+    connect(sw_->getQTimer(), &QTimer::timeout, this, &MainWindow::RunConnectionToDB);
+
 }
 
 MainWindow::~MainWindow()
@@ -49,6 +56,7 @@ void MainWindow::ReceiveStatusConnectionToDB(bool status)
         ui->lb_status->setText("Подключено к БД");
         ui->lb_status->setStyleSheet("color:green");
         ui->statusbar->addWidget(ui->lb_status);
+        ui->groupBox->setEnabled(true);
         sw_->Stop();
     }
     else
@@ -84,3 +92,28 @@ void MainWindow::RunConnectionToDB()
         }
     }
 }
+
+void MainWindow::FillDataInAirports(QSqlQueryModel *model)
+{
+    for(int i = 0; i < model->rowCount(); ++i)
+    {
+        ui->cb_airports->addItem(model->data(model->index(i,0)).toString());
+        airports_[model->data(model->index(i,0)).toString()] = model->data(model->index(i,1)).toString();
+    }
+
+}
+
+void MainWindow::on_pb_getList_clicked()
+{
+    QString airportCode = airports_[ui->cb_airports->currentText()];
+    QString date = ui->de_date->text();
+    if(ui->rb_arrival->isCheckable())
+    {
+        dataBase_->GetDataArrivals(airportCode, date);
+    }
+    else if(ui->rb_departure->isCheckable())
+    {
+        dataBase_->GetDataDepartures(airportCode, date);
+    }
+}
+

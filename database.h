@@ -6,6 +6,7 @@
 #include <QSqlError>
 #include <QSqlQueryModel>
 #include <QSqlTableModel>
+#include <QSqlQuery>
 
 #define POSTGRE_DRIVER "QPSQL"
 #define DB_NAME "MyDB"
@@ -29,6 +30,8 @@ public:
     void ConnectToDB();
     void DisconnectFromDB(QString nameDb = "");
     void AddDataBase(QString driver, QString nameDB = "");
+    void GetDataArrivals(const QString& airportCode, const QString& date);
+    void GetDataDepartures(const QString& airportCode, const QString& date);
     bool status_;
 
     /*!
@@ -40,11 +43,14 @@ signals:
     void sig_SendTableFromDB(QSqlTableModel* model);
     void sig_SendStatusConnection(bool);
     void sig_SendQueryFromDB(QSqlQueryModel* model);
+    void sig_SendDataToAirports(QSqlQueryModel* model);
+    void sig_SendDataToArrivals(QSqlQueryModel* model);
+    void sig_SendDataToDepartures(QSqlQueryModel* model);
 
 private:
     QSqlDatabase *dataBase_;
     QSqlTableModel* modelTable_;
-    QSqlQueryModel* modelQuery;
+    QSqlQueryModel* modelQuery_;
 
 };
 

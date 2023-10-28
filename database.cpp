@@ -3,7 +3,7 @@
 DataBase::DataBase(QObject *parent) : QObject{parent}
 {
     dataBase_ = new QSqlDatabase();
-    modelQuery= new QSqlQueryModel(this);
+    modelQuery_= new QSqlQueryModel(this);
     status_ = false;
 }
 
@@ -31,13 +31,22 @@ void DataBase::ConnectToDB()
     dataBase_->setPassword(data[pass]);
 
     status_ = dataBase_->open();
-//    modelQuery->setQuery("SELECT * FROM bookings.bookings", *dataBase_);
     modelTable_->setTable("bookings.flights");
+    modelTable_->setFilter("flight_id < 10");
     modelTable_->select();
     emit sig_SendTableFromDB(modelTable_);
-//    emit sig_SendQueryFromDB(modelQuery);
 
+    QString request = "SELECT airport_name->>'ru', airport_code FROM bookings.airports_data";
+    QSqlQuery* query = new QSqlQuery(*dataBase_);
+    QSqlError error;
+    if(!query->exec(request)){
+        error = query->lastError();
+    }
+    modelQuery_->setQuery(*query);
+
+    emit sig_SendDataToAirports(modelQuery_);
     emit sig_SendStatusConnection(status_);
+    delete query;
 
 }
 
@@ -51,6 +60,38 @@ void DataBase::AddDataBase(QString driver, QString nameDB)
 {
     *dataBase_ = QSqlDatabase::addDatabase(driver, nameDB);
     modelTable_ = new QSqlTableModel(this, *dataBase_);
+}
+
+void DataBase::GetDataArrivals(const QString& airportCode, const QString& date)
+{
+    QString request = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru' as Name "
+                      "FROM bookings.flights f ";
+    "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport"
+    "WHERE (f.arrival_airport  = '" + airportCode + "' AND f.shceduled_arrival::date = date('" + date + "'))";
+    QSqlQuery* query = new QSqlQuery(*dataBase_);
+    QSqlError error;
+    if(!query->exec(request)){
+        error = query->lastError();
+    }
+    modelQuery_->setQuery(*query);
+    emit sig_SendDataToArrivals(modelQuery_);
+    delete query;
+}
+
+void DataBase::GetDataDepartures(const QString &airportCode, const QString& date)
+{
+    QString request = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' as Name "
+                      "FROM bookings.flights f ";
+    "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport"
+    "WHERE f.departure_airport  = '" + airportCode + "' AND f.scheduled_departure::date = date('" + date + "'))";
+    QSqlQuery* query = new QSqlQuery(*dataBase_);
+    QSqlError error;
+    if(!query->exec(request)){
+        error = query->lastError();
+    }
+    modelQuery_->setQuery(*query);
+    emit sig_SendDataToArrivals(modelQuery_);
+    delete query;
 }
 
 
