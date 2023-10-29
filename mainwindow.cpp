@@ -34,6 +34,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(statistics_, &Statistics::sig_CloseStatistics, this, &MainWindow::StatisticsIsClosed);
 
+    connect(dataBase_, &DataBase::sig_SendStatisticsPerYear, this, &MainWindow::GetStatisticsPerYear);
+
 }
 
 MainWindow::~MainWindow()
@@ -113,21 +115,25 @@ void MainWindow::StatisticsIsClosed()
     statistics_->close();
 }
 
-void MainWindow::GetStatisticsPerYear()
+void MainWindow::GetStatisticsPerYear(QSqlQueryModel *model)
 {
-//    dataBase_->
-//    statistics_->SetStatisticsPerYear();
+    QVector<double> data;
+    for(int i = 0; i < model->rowCount(); ++i)
+    {
+        data.append(model->data(model->index(i,0)).toDouble());
+    }
+    statistics_->SetStatisticsPerYear(data);
 }
 
 void MainWindow::on_pb_getList_clicked()
 {
     QString airportCode = airports_[ui->cb_airports->currentText()];
     QString date = ui->de_date->text();
-    if(ui->rb_arrival->isCheckable())
+    if(ui->rb_arrival->isChecked())
     {
         dataBase_->GetDataArrivals(airportCode, date);
     }
-    else if(ui->rb_departure->isCheckable())
+    else if(ui->rb_departure->isChecked())
     {
         dataBase_->GetDataDepartures(airportCode, date);
     }
@@ -139,7 +145,8 @@ void MainWindow::on_pb_showLoad_clicked()
     ui->centralwidget->setEnabled(false);
     QString airportCode = ui->cb_airports->currentText() +
             " (" + airports_[ui->cb_airports->currentText()] + ")";
-    statistics_->SetAirport(airportCode);
+    statistics_->SetAirportText(airportCode);
+    dataBase_->GetStatisticsPerYear(airports_[ui->cb_airports->currentText()]);
     statistics_->show();
 }
 

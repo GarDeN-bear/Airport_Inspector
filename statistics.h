@@ -19,9 +19,9 @@ public:
     explicit Statistics(QWidget *parent = nullptr);
     ~Statistics();
 
-    void SetAirport(const QString& airport);
+    void SetAirportText(const QString& airport);
     void closeEvent(QCloseEvent* event) override;
-    void SetStatisticsPerYear(DataBase);
+    void SetStatisticsPerYear(const QVector<double> data);
 
 public slots:
     void on_pb_close_clicked();
@@ -32,7 +32,9 @@ signals:
 private:
     Ui::Statistics *ui;
     QVector<QString> months_;
+    QVector<int> days_;
     QCPBars *CPBarsForYear_;
+    QCPBars *CPBarsForMonth_;
 };
 
 #endif // STATISTICS_H

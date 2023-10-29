@@ -3,7 +3,8 @@
 DataBase::DataBase(QObject *parent) : QObject{parent}
 {
     dataBase_ = new QSqlDatabase();
-    modelQuery_= new QSqlQueryModel(this);
+    modelQueryMain= new QSqlQueryModel(this);
+    modelQueryStatistics = new QSqlQueryModel(this);
     status_ = false;
 }
 
@@ -36,15 +37,15 @@ void DataBase::ConnectToDB()
     modelTable_->select();
     emit sig_SendTableFromDB(modelTable_);
 
-    QString request = "SELECT airport_name->>'ru', airport_code FROM bookings.airports_data";
+    QString request = "SELECT airport_name->>'ru' AS name, airport_code FROM bookings.airports_data ORDER BY name";
     QSqlQuery* query = new QSqlQuery(*dataBase_);
     QSqlError error;
     if(!query->exec(request)){
         error = query->lastError();
     }
-    modelQuery_->setQuery(*query);
+    modelQueryMain->setQuery(*query);
 
-    emit sig_SendDataToAirports(modelQuery_);
+    emit sig_SendDataToAirports(modelQueryMain);
     emit sig_SendStatusConnection(status_);
     delete query;
 
@@ -65,34 +66,55 @@ void DataBase::AddDataBase(QString driver, QString nameDB)
 void DataBase::GetDataArrivals(const QString& airportCode, const QString& date)
 {
     QString parsedDate = ParseInputDate(date);
-    QString request = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru'"
+    QString request = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru' AS name "
                       "FROM bookings.flights f "
                       "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport "
-                      "WHERE (f.arrival_airport  = '" + airportCode + "' AND f.shceduled_arrival::date = date('" + parsedDate + "'))";
+                      "WHERE (f.arrival_airport  = '" + airportCode + "' AND f.scheduled_arrival::date = date('" + parsedDate + "')) "
+                      "ORDER BY name";
     QSqlQuery* query = new QSqlQuery(*dataBase_);
     QSqlError error;
     if(!query->exec(request)){
         error = query->lastError();
     }
-    modelQuery_->setQuery(*query);
-    emit sig_SendDataToArrivals(modelQuery_);
+    modelQueryMain->setQuery(*query);
+    emit sig_SendDataToArrivals(modelQueryMain);
     delete query;
 }
 
 void DataBase::GetDataDepartures(const QString &airportCode, const QString& date)
 {
     QString parsedDate = ParseInputDate(date);
-    QString request = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' "
+    QString request = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' AS name "
                       "FROM bookings.flights f "
-                      "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport "
-                      "WHERE f.departure_airport  = '" + airportCode + "' AND f.scheduled_departure::date = date('" + parsedDate + "'))";
+                      "JOIN bookings.airports_data ad on ad.airport_code = f.arrival_airport "
+                      "WHERE (f.departure_airport  = '" + airportCode + "' AND f.scheduled_departure::date = date('" + parsedDate + "')) "
+                      "ORDER BY name";
     QSqlQuery* query = new QSqlQuery(*dataBase_);
     QSqlError error;
     if(!query->exec(request)){
         error = query->lastError();
     }
-    modelQuery_->setQuery(*query);
-    emit sig_SendDataToArrivals(modelQuery_);
+    modelQueryMain->setQuery(*query);
+    emit sig_SendDataToDepartures(modelQueryMain);
+    delete query;
+}
+
+void DataBase::GetStatisticsPerYear(const QString &airportCode)
+{
+    QString request = "SELECT count(flight_no), date_trunc('month', scheduled_departure) AS Month "
+                      "FROM bookings.flights f "
+                      "WHERE (scheduled_departure::date > date('2016-08-31') "
+                      "AND scheduled_departure::date <= date('2017-08-31')) AND "
+                      "(departure_airport = '" + airportCode + "' or arrival_airport = '" + airportCode + "') "
+                      "GROUP BY Month";
+
+    QSqlQuery* query = new QSqlQuery(*dataBase_);
+    QSqlError error;
+    if(!query->exec(request)){
+        error = query->lastError();
+    }
+    modelQueryStatistics->setQuery(*query);
+    emit sig_SendStatisticsPerYear(modelQueryStatistics);
     delete query;
 }
 
