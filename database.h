@@ -32,7 +32,8 @@ public:
     void AddDataBase(QString driver, QString nameDB = "");
     void GetDataArrivals(const QString& airportCode, const QString& date);
     void GetDataDepartures(const QString& airportCode, const QString& date);
-    void GetStatisticsPerYear(const QString &airportCode);
+    void GetDataPerYear(const QString &airportCode);
+    void GetDataPerMonth(const QString &airportCode);
     bool status_;
 
     /*!
@@ -47,13 +48,14 @@ signals:
     void sig_SendDataToAirports(QSqlQueryModel* model);
     void sig_SendDataToArrivals(QSqlQueryModel* model);
     void sig_SendDataToDepartures(QSqlQueryModel* model);
-    void sig_SendStatisticsPerYear(QSqlQueryModel* model);
+    void sig_SendDataPerYear(QSqlQueryModel* model);
+    void sig_SendDataPerMonth(QSqlQueryModel* model);
 
 private:
     QSqlDatabase *dataBase_;
     QSqlTableModel* modelTable_;
     QSqlQueryModel* modelQueryMain;
-    QSqlQueryModel* modelQueryStatistics;
+    QSqlQueryModel* modelQueryData;
     QString ParseInputDate(const QString& date);
 
 

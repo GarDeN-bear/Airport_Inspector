@@ -34,7 +34,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(statistics_, &Statistics::sig_CloseStatistics, this, &MainWindow::StatisticsIsClosed);
 
-    connect(dataBase_, &DataBase::sig_SendStatisticsPerYear, this, &MainWindow::GetStatisticsPerYear);
+    connect(dataBase_, &DataBase::sig_SendDataPerYear, this, &MainWindow::GetDataPerYear);
+    connect(dataBase_, &DataBase::sig_SendDataPerMonth, this, &MainWindow::GetDataPerMonth);
 
 }
 
@@ -115,14 +116,24 @@ void MainWindow::StatisticsIsClosed()
     statistics_->close();
 }
 
-void MainWindow::GetStatisticsPerYear(QSqlQueryModel *model)
+void MainWindow::GetDataPerYear(QSqlQueryModel *model)
 {
     QVector<double> data;
     for(int i = 0; i < model->rowCount(); ++i)
     {
         data.append(model->data(model->index(i,0)).toDouble());
     }
-    statistics_->SetStatisticsPerYear(data);
+    statistics_->SetDataPerYear(data);
+}
+
+void MainWindow::GetDataPerMonth(QSqlQueryModel *model)
+{
+    QMultiMap<int, double> data;
+    for(int i = 0; i < model->rowCount(); ++i)
+    {
+        data.insert(model->data(model->index(i,1)).toInt(), model->data(model->index(i,0)).toDouble());
+    }
+    statistics_->SetDataPerMonth(data);
 }
 
 void MainWindow::on_pb_getList_clicked()
@@ -146,7 +157,8 @@ void MainWindow::on_pb_showLoad_clicked()
     QString airportCode = ui->cb_airports->currentText() +
             " (" + airports_[ui->cb_airports->currentText()] + ")";
     statistics_->SetAirportText(airportCode);
-    dataBase_->GetStatisticsPerYear(airports_[ui->cb_airports->currentText()]);
+    dataBase_->GetDataPerYear(airports_[ui->cb_airports->currentText()]);
+    dataBase_->GetDataPerMonth(airports_[ui->cb_airports->currentText()]);
     statistics_->show();
 }
 

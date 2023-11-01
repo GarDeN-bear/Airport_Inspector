@@ -6,24 +6,27 @@ Statistics::Statistics(QWidget *parent) :
     ui(new Ui::Statistics)
 {
     ui->setupUi(this);
+    isDataMonthReady_ = false;
+    ui->tabWidget->setCurrentWidget(ui->tab_perYear);
+
     CPBarsForYear_ = new QCPBars(ui->widget_loadPerYear->xAxis,
                                  ui->widget_loadPerYear->yAxis
                                  );
+
     CPBarsForMonth_ = new QCPBars(ui->widget_loadPerMonth->xAxis,
                                   ui->widget_loadPerMonth->yAxis
                                   );
 
-    months_ = {"Январь", "Февраль", "Март",
-               "Апрель", "Май", "Июнь",
-               "Июль", "Август", "Сентябрь",
-               "Октябрь", "Ноябрь", "Декабрь"
+    months_ = { {1, "Январь"}, {2, "Февраль"}, {3, "Март"},
+                {4, "Апрель"}, {5, "Май"}, {6, "Июнь"},
+                {7, "Июль"}, {8, "Август"}, {9, "Сентябрь"},
+                {10, "Октябрь"}, {11, "Ноябрь"}, {12, "Декабрь"}
               };
 
-    for(const auto& el : months_)
+    for(const auto& [key, value] : months_.asKeyValueRange())
     {
-        ui->cb_months->addItem(el);
+        ui->cb_months->addItem(value);
     }
-    ui->tab_perYear->activateWindow();
 }
 
 Statistics::~Statistics()
@@ -40,22 +43,28 @@ void Statistics::SetAirportText(const QString &airport)
 
 void Statistics::closeEvent(QCloseEvent *event)
 {
+    isDataMonthReady_ = !isDataMonthReady_;
+    ui->cb_months->setCurrentText(months_[1]);
     emit sig_CloseStatistics();
 }
 
-void Statistics::SetStatisticsPerYear(const QVector<double> data)
+void Statistics::on_pb_close_clicked()
+{
+    isDataMonthReady_ = !isDataMonthReady_;
+    ui->cb_months->setCurrentText(months_[1]);
+    emit sig_CloseStatistics();
+}
+
+void Statistics::SetDataPerYear(const QVector<double> data)
 {
     ui->widget_loadPerYear->clearGraphs();
     // prepare x axis with country labels:
     QVector<double> ticks;
     QVector<QString> labels;
-    for(int i = 0; i < months_.size() + 1; ++i)
+    for(const auto& [key, value] : months_.asKeyValueRange())
     {
-        ticks << i + 1;
-        if (i < months_.size())
-        {
-            labels << months_[i];
-        }
+        ticks << key;
+        labels << value;
     }
     QSharedPointer<QCPAxisTickerText> textTicker(new QCPAxisTickerText);
     textTicker->addTicks(ticks, labels);
@@ -78,8 +87,72 @@ void Statistics::SetStatisticsPerYear(const QVector<double> data)
     ui->widget_loadPerYear->replot();
 }
 
-void Statistics::on_pb_close_clicked()
+void Statistics::SetDataPerMonth(const QMultiMap<int, double> data)
 {
-    emit sig_CloseStatistics();
+    dataMonth_ = data;
+    isDataMonthReady_ = !isDataMonthReady_;
+    SetStatisticsPerMonth(1);
+}
+
+void Statistics::SetStatisticsPerMonth(const int month)
+{
+
+    ui->widget_loadPerMonth->clearGraphs();
+    QVector<double> data;
+    for (const auto& [key, value] : dataMonth_.asKeyValueRange())
+    {
+        if (key == month)
+        {
+            data.append(value);
+        }
+    }
+    // prepare x axis with country labels:
+    QVector<double> ticks;
+    QVector<QString> labels;
+    for(int i = 0; i < data.size(); ++i)
+    {
+        ticks << i + 1;
+        labels << QString::number(i + 1);
+    }
+    QSharedPointer<QCPAxisTickerText> textTicker(new QCPAxisTickerText);
+    textTicker->addTicks(ticks, labels);
+    ui->widget_loadPerMonth->xAxis->setTicker(textTicker);
+    ui->widget_loadPerMonth->xAxis->setTickLabelRotation(60);
+    ui->widget_loadPerMonth->xAxis->setSubTicks(false);
+    ui->widget_loadPerMonth->xAxis->setTickLength(0, 4);
+    ui->widget_loadPerMonth->xAxis->setLabel("Дни");
+    ui->widget_loadPerMonth->xAxis->setRange(0, data.size() + 1);
+    ui->widget_loadPerMonth->xAxis->grid()->setVisible(true);
+
+    // prepare y axis:
+    ui->widget_loadPerMonth->yAxis->setRange(0, *std::max_element(data.begin(), data.end()) + 1);
+    ui->widget_loadPerMonth->yAxis->setPadding(5); // a bit more space to the left border
+    ui->widget_loadPerMonth->yAxis->setLabel("Загруженность аэропорта за месяц");
+    ui->widget_loadPerMonth->yAxis->grid()->setSubGridVisible(true);
+    ui->widget_loadPerMonth->yAxis->grid()->setPen(QPen(QColor(130, 130, 130), 0, Qt::SolidLine));
+    ui->widget_loadPerMonth->yAxis->grid()->setSubGridPen(QPen(QColor(130, 130, 130), 0, Qt::DotLine));
+    CPBarsForMonth_->setData(ticks, data);
+    ui->widget_loadPerMonth->replot();
+}
+
+int Statistics::findMonth(const QString &arg1)
+{
+    for (const auto& [key, value] : months_.asKeyValueRange())
+    {
+        if (arg1 == value)
+        {
+            return key;
+        }
+    }
+    return -1;
+}
+
+
+void Statistics::on_cb_months_currentTextChanged(const QString &arg1)
+{
+    if (isDataMonthReady_)
+    {
+        SetStatisticsPerMonth(findMonth(arg1));
+    }
 }
 

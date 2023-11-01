@@ -33,7 +33,8 @@ private slots:
     void FillDataInAirports(QSqlQueryModel *model);
 
     void StatisticsIsClosed();
-    void GetStatisticsPerYear(QSqlQueryModel *model);
+    void GetDataPerYear(QSqlQueryModel *model);
+    void GetDataPerMonth(QSqlQueryModel *model);
 
 private:
     Ui::MainWindow *ui;

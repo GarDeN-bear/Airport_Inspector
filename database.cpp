@@ -4,7 +4,7 @@ DataBase::DataBase(QObject *parent) : QObject{parent}
 {
     dataBase_ = new QSqlDatabase();
     modelQueryMain= new QSqlQueryModel(this);
-    modelQueryStatistics = new QSqlQueryModel(this);
+    modelQueryData = new QSqlQueryModel(this);
     status_ = false;
 }
 
@@ -99,7 +99,7 @@ void DataBase::GetDataDepartures(const QString &airportCode, const QString& date
     delete query;
 }
 
-void DataBase::GetStatisticsPerYear(const QString &airportCode)
+void DataBase::GetDataPerYear(const QString &airportCode)
 {
     QString request = "SELECT count(flight_no), date_trunc('month', scheduled_departure) AS Month "
                       "FROM bookings.flights f "
@@ -113,8 +113,27 @@ void DataBase::GetStatisticsPerYear(const QString &airportCode)
     if(!query->exec(request)){
         error = query->lastError();
     }
-    modelQueryStatistics->setQuery(*query);
-    emit sig_SendStatisticsPerYear(modelQueryStatistics);
+    modelQueryData->setQuery(*query);
+    emit sig_SendDataPerYear(modelQueryData);
+    delete query;
+}
+
+void DataBase::GetDataPerMonth(const QString &airportCode)
+{
+    QString request = "SELECT count(flight_no), date_part('month', date_trunc('day', scheduled_departure)), date_trunc('day', scheduled_departure) AS Day "
+                      "FROM bookings.flights f "
+                      "WHERE (scheduled_departure::date > date('2016-08-31') "
+                      "AND scheduled_departure::date <= date('2017-08-31')) AND "
+                      "(departure_airport = '" + airportCode + "' or arrival_airport = '" + airportCode + "') "
+                      "GROUP BY Day";
+
+    QSqlQuery* query = new QSqlQuery(*dataBase_);
+    QSqlError error;
+    if(!query->exec(request)){
+        error = query->lastError();
+    }
+    modelQueryData->setQuery(*query);
+    emit sig_SendDataPerMonth(modelQueryData);
     delete query;
 }
 
