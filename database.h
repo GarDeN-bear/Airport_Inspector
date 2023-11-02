@@ -16,47 +16,132 @@ class DataBase : public QObject
 {
     Q_OBJECT
 public:
-    //Перечисление полей данных
+
+    /*!
+     *  @brief Перечисление полей данных.
+     */
     enum fieldsForConnect{
-        hostName = 0,
-        dbName = 1,
-        login = 2,
-        pass = 3,
-        port = 4
+        hostName = 0, //<! Имя хоста.
+        dbName = 1, //<! Имя базы данных.
+        login = 2, //<! Логин.
+        pass = 3, //<! Пароль.
+        port = 4 //<! Порт.
     };
 
     DataBase(QObject *parent = nullptr);
     ~DataBase();
-    void ConnectToDB();
-    void DisconnectFromDB(QString nameDb = "");
-    void AddDataBase(QString driver, QString nameDB = "");
-    void GetDataArrivals(const QString& airportCode, const QString& date);
-    void GetDataDepartures(const QString& airportCode, const QString& date);
-    void GetDataPerYear(const QString &airportCode);
-    void GetDataPerMonth(const QString &airportCode);
-    bool status_;
 
     /*!
-     * @brief Метод возвращает последнюю ошибку БД
+     *  @brief Добавить БД.
+     *  @param driver Драйвер БД.
+     *  @param nameDB Имя БД.
      */
-    QSqlError GetLastError(void);
+    void addDataBase(QString driver, QString nameDB = "");
+
+    /*!
+     *  @brief Получить статус подключения.
+     */
+    bool getStatusConnection();
+
+    /*!
+     *  @brief Подключиться к БД.
+     */
+    void connectToDB();
+
+    /*!
+     *  @brief Отключиться от БД.
+     *  @param nameDB Имя БД.
+     */
+    void disconnectFromDB(QString nameDb = "");
+
+    /*!
+     * @brief Метод возвращает последнюю ошибку БД.
+     */
+    QSqlError getLastError();
+
+    /*!
+     *  @brief Получить данные о рейсах в аэропорт.
+     *  @param airportCode Код аэропорта.
+     *  @param date Дата.
+     */
+    void getDataArrivals(const QString& airportCode, const QString& date);
+
+    /*!
+     *  @brief Получить данные о рейсах из аэропорта.
+     *  @param airportCode Код аэропорта.
+     *  @param date Дата.
+     */
+    void getDataDepartures(const QString& airportCode, const QString& date);
+
+    /*!
+     *  @brief Получить данные за год по месяцам.
+     *  @param airportCode Код аэропорта.
+     */
+    void getDataPerYear(const QString &airportCode);
+
+    /*!
+     *  @brief Получить данные за год по дням.
+     *  @param airportCode Код аэропорта.
+     */
+    void getDataPerMonth(const QString &airportCode);
 
 signals:
+
+    /*!
+     * @brief Сигнал: "Отправить статус подключения".
+     */
+    void sig_SendStatusConnection(bool statusConnection_);
+
+    /*!
+     * @brief Сигнал: "Отправить модель SQL таблицы".
+     * @param model Модель SQL таблицы.
+     */
     void sig_SendTableFromDB(QSqlTableModel* model);
-    void sig_SendStatusConnection(bool);
+
+    /*!
+     * @brief Сигнал: "Отправить список аэропортов".
+     * @param model Модель SQL запроса.
+     */
+    void sig_SendListAirports(QSqlQueryModel* model);
+
+    /*!
+     * @brief Сигнал: "Отправить модель SQL запроса".
+     * @param model Модель SQL запроса.
+     */
     void sig_SendQueryFromDB(QSqlQueryModel* model);
-    void sig_SendDataToAirports(QSqlQueryModel* model);
+
+    /*!
+     * @brief Сигнал: "Отправить данные о рейсах в аэропорт".
+     * @param model Модель SQL запроса.
+     */
     void sig_SendDataToArrivals(QSqlQueryModel* model);
+
+    /*!
+     * @brief Сигнал: "Отправить данные о рейсах из аэропорта".
+     * @param model Модель SQL запроса.
+     */
     void sig_SendDataToDepartures(QSqlQueryModel* model);
+
+    /*!
+     * @brief Сигнал: "Отправить данные за год по месяцам".
+     * @param model Модель SQL запроса.
+     */
     void sig_SendDataPerYear(QSqlQueryModel* model);
+
+    /*!
+     * @brief Сигнал: "Отправить данные за год по дням".
+     * @param model Модель SQL запроса.
+     */
     void sig_SendDataPerMonth(QSqlQueryModel* model);
 
 private:
-    QSqlDatabase *dataBase_;
-    QSqlTableModel* modelTable_;
-    QSqlQueryModel* modelQueryMain;
-    QSqlQueryModel* modelQueryData;
-    QString ParseInputDate(const QString& date);
+    QSqlDatabase *dataBase_; //!< База данных.
+    bool statusConnection_; //!< Статус подключения.
+    QSqlTableModel* modelTable_; //!< Модель SQL таблицы.
+    QSqlQueryModel* modelQueryMain_; //!< Модель SQL запроса для главной формы.
+    QSqlQueryModel* modelQueryStatistics_; //!< База данных для статистики загрузки аэропорта.
+
+    QString convertInputDate(const QString& date); //!< Привести дату в нужный формат.
 
 
 

@@ -3,9 +3,9 @@
 DataBase::DataBase(QObject *parent) : QObject{parent}
 {
     dataBase_ = new QSqlDatabase();
-    modelQueryMain= new QSqlQueryModel(this);
-    modelQueryData = new QSqlQueryModel(this);
-    status_ = false;
+    modelQueryMain_= new QSqlQueryModel(this);
+    modelQueryStatistics_ = new QSqlQueryModel(this);
+    statusConnection_ = false;
 }
 
 DataBase::~DataBase()
@@ -13,7 +13,18 @@ DataBase::~DataBase()
     delete dataBase_;
 }
 
-void DataBase::ConnectToDB()
+void DataBase::addDataBase(QString driver, QString nameDB)
+{
+    *dataBase_ = QSqlDatabase::addDatabase(driver, nameDB);
+    modelTable_ = new QSqlTableModel(this, *dataBase_);
+}
+
+bool DataBase::getStatusConnection()
+{
+    return statusConnection_;
+}
+
+void DataBase::connectToDB()
 {
     //Данные для подключения к БД.
     QVector<QString> data;
@@ -31,11 +42,10 @@ void DataBase::ConnectToDB()
     dataBase_->setUserName(data[login]);
     dataBase_->setPassword(data[pass]);
 
-    status_ = dataBase_->open();
+    statusConnection_ = dataBase_->open();
     modelTable_->setTable("bookings.flights");
     modelTable_->setFilter("flight_id < 10");
     modelTable_->select();
-    emit sig_SendTableFromDB(modelTable_);
 
     QString request = "SELECT airport_name->>'ru' AS name, airport_code FROM bookings.airports_data ORDER BY name";
     QSqlQuery* query = new QSqlQuery(*dataBase_);
@@ -43,29 +53,28 @@ void DataBase::ConnectToDB()
     if(!query->exec(request)){
         error = query->lastError();
     }
-    modelQueryMain->setQuery(*query);
+    modelQueryMain_->setQuery(*query);
 
-    emit sig_SendDataToAirports(modelQueryMain);
-    emit sig_SendStatusConnection(status_);
+    emit sig_SendStatusConnection(statusConnection_);
+    emit sig_SendTableFromDB(modelTable_);
+    emit sig_SendListAirports(modelQueryMain_);
     delete query;
-
 }
 
-void DataBase::DisconnectFromDB(QString nameDb)
+void DataBase::disconnectFromDB(QString nameDb)
 {
     *dataBase_ = QSqlDatabase::database(nameDb);
     dataBase_->close();
 }
 
-void DataBase::AddDataBase(QString driver, QString nameDB)
+QSqlError DataBase::getLastError()
 {
-    *dataBase_ = QSqlDatabase::addDatabase(driver, nameDB);
-    modelTable_ = new QSqlTableModel(this, *dataBase_);
+    return dataBase_->lastError();
 }
 
-void DataBase::GetDataArrivals(const QString& airportCode, const QString& date)
+void DataBase::getDataArrivals(const QString& airportCode, const QString& date)
 {
-    QString parsedDate = ParseInputDate(date);
+    QString parsedDate = convertInputDate(date);
     QString request = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru' AS name "
                       "FROM bookings.flights f "
                       "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport "
@@ -76,14 +85,14 @@ void DataBase::GetDataArrivals(const QString& airportCode, const QString& date)
     if(!query->exec(request)){
         error = query->lastError();
     }
-    modelQueryMain->setQuery(*query);
-    emit sig_SendDataToArrivals(modelQueryMain);
+    modelQueryMain_->setQuery(*query);
+    emit sig_SendDataToArrivals(modelQueryMain_);
     delete query;
 }
 
-void DataBase::GetDataDepartures(const QString &airportCode, const QString& date)
+void DataBase::getDataDepartures(const QString &airportCode, const QString& date)
 {
-    QString parsedDate = ParseInputDate(date);
+    QString parsedDate = convertInputDate(date);
     QString request = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' AS name "
                       "FROM bookings.flights f "
                       "JOIN bookings.airports_data ad on ad.airport_code = f.arrival_airport "
@@ -94,12 +103,12 @@ void DataBase::GetDataDepartures(const QString &airportCode, const QString& date
     if(!query->exec(request)){
         error = query->lastError();
     }
-    modelQueryMain->setQuery(*query);
-    emit sig_SendDataToDepartures(modelQueryMain);
+    modelQueryMain_->setQuery(*query);
+    emit sig_SendDataToDepartures(modelQueryMain_);
     delete query;
 }
 
-void DataBase::GetDataPerYear(const QString &airportCode)
+void DataBase::getDataPerYear(const QString &airportCode)
 {
     QString request = "SELECT count(flight_no), date_trunc('month', scheduled_departure) AS Month "
                       "FROM bookings.flights f "
@@ -113,12 +122,12 @@ void DataBase::GetDataPerYear(const QString &airportCode)
     if(!query->exec(request)){
         error = query->lastError();
     }
-    modelQueryData->setQuery(*query);
-    emit sig_SendDataPerYear(modelQueryData);
+    modelQueryStatistics_->setQuery(*query);
+    emit sig_SendDataPerYear(modelQueryStatistics_);
     delete query;
 }
 
-void DataBase::GetDataPerMonth(const QString &airportCode)
+void DataBase::getDataPerMonth(const QString &airportCode)
 {
     QString request = "SELECT count(flight_no), date_part('month', date_trunc('day', scheduled_departure)), date_trunc('day', scheduled_departure) AS Day "
                       "FROM bookings.flights f "
@@ -132,18 +141,12 @@ void DataBase::GetDataPerMonth(const QString &airportCode)
     if(!query->exec(request)){
         error = query->lastError();
     }
-    modelQueryData->setQuery(*query);
-    emit sig_SendDataPerMonth(modelQueryData);
+    modelQueryStatistics_->setQuery(*query);
+    emit sig_SendDataPerMonth(modelQueryStatistics_);
     delete query;
 }
 
-
-QSqlError DataBase::GetLastError()
-{
-    return dataBase_->lastError();
-}
-
-QString DataBase::ParseInputDate(const QString &date)
+QString DataBase::convertInputDate(const QString &date)
 {
     QString day, month, year;
     for(int i = 0; i < date.size(); ++i)

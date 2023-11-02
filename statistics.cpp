@@ -8,6 +8,17 @@ Statistics::Statistics(QWidget *parent) :
     ui->setupUi(this);
     isDataMonthReady_ = false;
     ui->tabWidget->setCurrentWidget(ui->tab_perYear);
+    months_ = { {1, "Январь"}, {2, "Февраль"}, {3, "Март"},
+                {4, "Апрель"}, {5, "Май"}, {6, "Июнь"},
+                {7, "Июль"}, {8, "Август"}, {9, "Сентябрь"},
+                {10, "Октябрь"}, {11, "Ноябрь"}, {12, "Декабрь"}
+              };
+//    ui>setWindowTitle("Статистика");
+
+    for(const auto& [key, value] : months_.asKeyValueRange())
+    {
+        ui->cb_months->addItem(value);
+    }
 
     CPBarsForYear_ = new QCPBars(ui->widget_loadPerYear->xAxis,
                                  ui->widget_loadPerYear->yAxis
@@ -17,16 +28,6 @@ Statistics::Statistics(QWidget *parent) :
                                   ui->widget_loadPerMonth->yAxis
                                   );
 
-    months_ = { {1, "Январь"}, {2, "Февраль"}, {3, "Март"},
-                {4, "Апрель"}, {5, "Май"}, {6, "Июнь"},
-                {7, "Июль"}, {8, "Август"}, {9, "Сентябрь"},
-                {10, "Октябрь"}, {11, "Ноябрь"}, {12, "Декабрь"}
-              };
-
-    for(const auto& [key, value] : months_.asKeyValueRange())
-    {
-        ui->cb_months->addItem(value);
-    }
 }
 
 Statistics::~Statistics()
@@ -36,26 +37,20 @@ Statistics::~Statistics()
     delete ui;
 }
 
-void Statistics::SetAirportText(const QString &airport)
+void Statistics::on_cb_months_currentTextChanged(const QString &arg1)
+{
+    if (isDataMonthReady_)
+    {
+        setStatisticsPerMonth(findMonth(arg1));
+    }
+}
+
+void Statistics::setAirportText(const QString &airport)
 {
     ui->l_airportsLoad->setText("Загруженность аэропорта " + airport);
 }
 
-void Statistics::closeEvent(QCloseEvent *event)
-{
-    isDataMonthReady_ = !isDataMonthReady_;
-    ui->cb_months->setCurrentText(months_[1]);
-    emit sig_CloseStatistics();
-}
-
-void Statistics::on_pb_close_clicked()
-{
-    isDataMonthReady_ = !isDataMonthReady_;
-    ui->cb_months->setCurrentText(months_[1]);
-    emit sig_CloseStatistics();
-}
-
-void Statistics::SetDataPerYear(const QVector<double> data)
+void Statistics::setDataPerYear(const QVector<double> data)
 {
     ui->widget_loadPerYear->clearGraphs();
     // prepare x axis with country labels:
@@ -87,14 +82,14 @@ void Statistics::SetDataPerYear(const QVector<double> data)
     ui->widget_loadPerYear->replot();
 }
 
-void Statistics::SetDataPerMonth(const QMultiMap<int, double> data)
+void Statistics::setDataPerMonth(const QMultiMap<int, double> data)
 {
     dataMonth_ = data;
     isDataMonthReady_ = !isDataMonthReady_;
-    SetStatisticsPerMonth(1);
+    setStatisticsPerMonth(1);
 }
 
-void Statistics::SetStatisticsPerMonth(const int month)
+void Statistics::setStatisticsPerMonth(const int month)
 {
 
     ui->widget_loadPerMonth->clearGraphs();
@@ -147,12 +142,17 @@ int Statistics::findMonth(const QString &arg1)
     return -1;
 }
 
-
-void Statistics::on_cb_months_currentTextChanged(const QString &arg1)
+void Statistics::on_pb_close_clicked()
 {
-    if (isDataMonthReady_)
-    {
-        SetStatisticsPerMonth(findMonth(arg1));
-    }
+    isDataMonthReady_ = !isDataMonthReady_;
+    ui->cb_months->setCurrentText(months_[1]);
+    emit sig_CloseStatistics();
+}
+
+void Statistics::closeEvent(QCloseEvent *event)
+{
+    isDataMonthReady_ = !isDataMonthReady_;
+    ui->cb_months->setCurrentText(months_[1]);
+    emit sig_CloseStatistics();
 }
 
