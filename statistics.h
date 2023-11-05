@@ -81,7 +81,6 @@ private:
     Ui::Statistics *ui; //<! Главное окно статистики загруженности аэропорта.
     QMap<int, QString> months_; //<! Месяцы.
     QCPBars *CPBarsForYear_; //<! Гистограмма статистики за год.
-    QCPBars *CPBarsForMonth_; //<! Гистограмма статистики за месяц.
     QMultiMap<int, double> dataMonth_; //<! Данные за месяцы.
     bool isDataMonthReady_; //<! Готовность данных о статистике за месяц.
 };
