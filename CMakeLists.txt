@@ -24,8 +24,6 @@ set(PROJECT_SOURCES
     statistics.h
     statistics.cpp
     statistics.ui
-    qcustomplot.cpp
-    qcustomplot.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -51,7 +49,10 @@ else()
 endif()
 endif()
 
+add_compile_definitions(QCUSTOMPLOT_USE_LIBRARY)
+
 target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/PG_Libs)
+target_link_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(Airport_Inspector PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Sql
@@ -61,7 +62,9 @@ target_link_libraries(Airport_Inspector PRIVATE
     libiconv-2
     libintl-9
     libpq
-    libssl-3-x64)
+    libssl-3-x64
+    qcustomplot2.dll
+)
 
 set_target_properties(Airport_Inspector PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
