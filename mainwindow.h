@@ -36,12 +36,6 @@ private slots:
     void RcvSignalSendStatusConnectionToDB(bool status);
 
     /*!
-     * @brief Отображениие таблицы БД в главном окне.
-     * @param model Модель SQL таблицы.
-     */
-    void RcvSignalSendTableFromDB(QSqlTableModel *model);
-
-    /*!
      * @brief Заполнение данных об аэропортах в чекбокс.
      * @param model Модель SQL запроса.
      */

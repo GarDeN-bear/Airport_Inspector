@@ -30,7 +30,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(sw_->getQTimer(), &QTimer::timeout, this, &MainWindow::RunConnectionToDB);
 
     connect(dataBase_, &DataBase::sig_SendStatusConnection, this, &MainWindow::RcvSignalSendStatusConnectionToDB);
-    connect(dataBase_, &DataBase::sig_SendTableFromDB, this, &MainWindow::RcvSignalSendTableFromDB);
     connect(dataBase_, &DataBase::sig_SendListAirports, this, &MainWindow::RcvSignalSendListAirports);
     connect(dataBase_, &DataBase::sig_SendQueryFromDB, this, &MainWindow::RcvSignalSendQueryFromDB);
     connect(dataBase_, &DataBase::sig_SendDataToArrivals, this, &MainWindow::RcvSignalSendQueryFromDB);
@@ -87,11 +86,6 @@ void MainWindow::RcvSignalSendStatusConnectionToDB(bool status)
         sw_->setTime(0);
         sw_->Start();
     }
-}
-
-void MainWindow::RcvSignalSendTableFromDB(QSqlTableModel *model)
-{
-    ui->tb_main->setModel(model);
 }
 
 void MainWindow::RcvSignalSendListAirports(QSqlQueryModel *model)

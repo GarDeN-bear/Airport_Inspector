@@ -93,12 +93,6 @@ signals:
     void sig_SendStatusConnection(bool statusConnection_);
 
     /*!
-     * @brief Сигнал: "Отправить модель SQL таблицы".
-     * @param model Модель SQL таблицы.
-     */
-    void sig_SendTableFromDB(QSqlTableModel* model);
-
-    /*!
      * @brief Сигнал: "Отправить список аэропортов".
      * @param model Модель SQL запроса.
      */
@@ -137,7 +131,6 @@ signals:
 private:
     QSqlDatabase *dataBase_; //!< База данных.
     bool statusConnection_; //!< Статус подключения.
-    QSqlTableModel* modelTable_; //!< Модель SQL таблицы.
     QSqlQueryModel* modelQueryMain_; //!< Модель SQL запроса для главной формы.
     QSqlQueryModel* modelQueryStatistics_; //!< База данных для статистики загрузки аэропорта.
 

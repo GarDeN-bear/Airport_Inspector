@@ -16,7 +16,6 @@ DataBase::~DataBase()
 void DataBase::addDataBase(QString driver, QString nameDB)
 {
     *dataBase_ = QSqlDatabase::addDatabase(driver, nameDB);
-    modelTable_ = new QSqlTableModel(this, *dataBase_);
 }
 
 bool DataBase::getStatusConnection()
@@ -43,9 +42,6 @@ void DataBase::connectToDB()
     dataBase_->setPassword(data[pass]);
 
     statusConnection_ = dataBase_->open();
-    modelTable_->setTable("bookings.flights");
-    modelTable_->setFilter("flight_id < 10");
-    modelTable_->select();
 
     QString request = "SELECT airport_name->>'ru' AS name, airport_code FROM bookings.airports_data ORDER BY name";
     QSqlQuery* query = new QSqlQuery(*dataBase_);
@@ -55,8 +51,8 @@ void DataBase::connectToDB()
     }
     modelQueryMain_->setQuery(*query);
 
+    emit sig_SendQueryFromDB(modelQueryMain_);
     emit sig_SendStatusConnection(statusConnection_);
-    emit sig_SendTableFromDB(modelTable_);
     emit sig_SendListAirports(modelQueryMain_);
     delete query;
 }
